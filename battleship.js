@@ -39,6 +39,7 @@ function init() {
   fireButton.onclick = handleFireButton;
   var guessInput = document.getElementById("guessInput");
   guessInput.onkeypress = handleKeyPress;
+  model.generateShipLocations();
 }
 
 function handleKeyPress(event) {
@@ -65,29 +66,35 @@ var model = {
   shipLength: 3,
   shipsSunk: 0,
   
-  ships: [ { locations: ["06", "16", "26"], hits: ["", "", ""] },
-           { locations: ["24", "34", "44"], hits: ["", "", ""] },
-           { locations: ["10", "11", "12"], hits: ["", "", ""] } ],
+  ships: [
+           { locations: [0, 0, 0], hits: ["", "", ""] },
+           { locations: [0, 0, 0], hits: ["", "", ""] },
+           { locations: [0, 0, 0], hits: ["", "", ""] }
+  ],
   
   fire: function(guess) {
     for (var i = 0; i < this.numShips; i++) {
       var ship = this.ships[i];
       var index = ship.locations.indexOf(guess);
-      if (index >= 0) {
-          // Есть попадание!
+      
+      if (ship.hits[index] === "hit") {
+        view.displayMessage("Oops, you already hit that location!");
+        return true;
+      } else if (index >= 0) {
         ship.hits[index] = "hit";
         view.displayHit(guess);
         view.displayMessage("HIT!");
+
         if (this.isSunk(ship)) {
           view.displayMessage("You sank my battleship!");
           this.shipsSunk++;
         }
         return true;
       }
-      view.displayMiss(guess);
-      view.displayMessage("You missed.");
-      return false;
     }
+    view.displayMiss(guess);
+    view.displayMessage("You missed.");
+    return false;
   },
   
   isSunk: function(ship) {
@@ -127,11 +134,25 @@ var model = {
     for (i = 0; i < this.shipLength; i++) {
       if (direction === 1) {
         // Добавить в массив для горизонтального корабля.
+        newShipLocations.push(row + "" + (col + i));
       } else {
         // Добавить в массив для вертикального корабля.
+        newShipLocations.push((row + i) + "" + col);
       }
     }
     return newShipLocations;
+  },
+  
+  collision: function(locations) {
+    for (var i = 0; i < this.numShips; i++) {
+      var ship = model.ships[i];
+      for (var j = 0; j < locations.length; j++) {
+        if (ship.locations.indexOf(locations[j]) >= 0) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
       
 };
